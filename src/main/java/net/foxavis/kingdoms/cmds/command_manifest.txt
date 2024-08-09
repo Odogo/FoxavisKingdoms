@@ -1,0 +1,86 @@
+Command Manifest
+Current Count: 59
+To do: 49 commands
+
+- 7/8-8 (a)
+/k help
+/k list
+/k show
+/k player
+/k join
+/k leave
+/k notify
+/k map [later]
+
+- 8/8-8 (b)
+/k create <name>
+/k disband
+/k name <new name>
+/k desc <description>
+/k motd <message>
+/k tag <tag>
+/k home <set|unset>
+/k chat <public|ally|kingdom> [<message>]
+
+- 11/12-4 (c)
+/k invite
+/k invite list
+/k invite add <player>
+/k invite remove <player>
+/k kick <player>
+/k flags [opens gui]
+/k flags list
+/k flags set <flag> <state>
+/k warps
+/k warps list
+/k warps add <name> (at current location of executor)
+/k warps remove <name>
+
+- 8/8-2 (d)
+/k claim
+/k claim one
+/k claim auto
+/k claim square <radius>
+/k unclaim
+/k unclaim one
+/k unclaim square <radius>
+/k unclaim all
+
+- 6/10-7 (e)
+/k rel(ation)
+/k ally <faction>
+/k truce <faction>
+/k neutral <faction>
+/k enemy <faction>
+/k war <faction>
+/k money balance
+/k money deposit
+/k money withdraw
+/k money give <player|faction> <amount>
+
+- 2/11-3 [f]
+/k promote <player>
+/k demote <player>
+-- do these later --
+/k rank [opens gui]
+/k rank list
+/k rank set <player> <rank>
+/k rank view <player>
+/k rank edit (opens gui)
+/k rank edit <rank>
+/k rank edit <rank> list
+/k rank edit <rank> add <perm>
+/k rank edit <rank> remove <perm>
+
+- 11/11-1 (g)
+/k admin help
+/k admin override
+/k admin claim <kingdom>
+/k admin unclaim
+/k admin delete <kingdom>
+/k admin chatspy [on|off]
+/k admin persistent <kingdom> [on|off]
+/k admin forcejoin <kingdom> [player]
+/k admin forcekick <player>
+/k admin forcerank <player> <rank>
+/k admin powerboost <player/kingdom> <amount>

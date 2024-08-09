@@ -1,0 +1,36 @@
+name: FoxavisKingdoms
+version: '1.0-SNAPSHOT'
+main: net.foxavis.kingdoms.FoxavisKingdoms
+api-version: '1.20'
+prefix: "Foxavis: Kingdoms"
+load: STARTUP
+authors: [ Odogo ]
+description: The Kingdom plugin for Foxavis
+depend:
+  - Vault
+
+commands:
+  kingdom:
+    description: "The main command for the Kingdom plugin"
+    usage: "/<command>"
+    aliases: [k]
+
+permissions:
+  foxavis.kingdoms.admin:
+    description: "The main admin permission for the Kingdom plugin"
+    default: op
+  foxavis.kingdoms.admin.*:
+    description: "The main admin permission for the Kingdom plugin"
+    default: op
+    children:
+      foxavis.kingdoms.admin: true
+      foxavis.kingdoms.admin.delete: true
+      foxavis.kingdoms.admin.forcejoin: true
+      foxavis.kingdoms.admin.chatspy: true
+      foxavis.kingdoms.admin.forcekick: true
+      foxavis.kingdoms.admin.claim: true
+      foxavis.kingdoms.admin.unclaim: true
+      foxavis.kingdoms.admin.forcerank: true
+      foxavis.kingdoms.admin.override: true
+      foxavis.kingdoms.admin.persistent: true
+      foxavis.kingdoms.admin.powerboost: true
