@@ -6,3 +6,10 @@ prefix: "Foxavis: Kingdoms"
 load: STARTUP
 authors: [ Odogo ]
 description: The Kingdom plugin for Foxavis
+depend:
+  - dynmap
+
+commands:
+  claim:
+    description: "Testing command"
+    usage: /<command>

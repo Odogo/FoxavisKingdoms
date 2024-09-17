@@ -64,6 +64,10 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<repository>
+			<id>MikeRepo</id>
+			<url>https://repo.mikeprimm.com/</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -78,6 +82,13 @@
 			<groupId>com.github.MilkBowl</groupId>
 			<artifactId>VaultAPI</artifactId>
 			<version>1.7</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>us.dynmap</groupId>
+			<artifactId>dynmap-api</artifactId>
+			<version>3.4-beta-3</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

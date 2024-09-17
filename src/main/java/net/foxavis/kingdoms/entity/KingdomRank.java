@@ -1,5 +1,10 @@
 package net.foxavis.kingdoms.entity;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,153 +22,199 @@ import java.util.Objects;
  */
 public class KingdomRank implements Describable {
 
-	@NotNull private String name; // the name of the rank
-	@Nullable private String description; // the optional description of a rank
+    /** The default Recruit rank, generated for all newly created Kingdoms */
+    public static final KingdomRank DEFAULT_RECRUIT = new KingdomRank(
+            3,
+            "Recruit",
+            "Fresh recruits of the kingdom, has not a lot of authority",
+            true,
+            Component.text("Recruit").color(NamedTextColor.YELLOW)
+    );
 
-	@Nullable private Character symbol; // an optional display symbol of a rank
+    /** The default Member rank, generated for all newly created Kingdoms */
+    public static final KingdomRank DEFAULT_MEMBER = new KingdomRank(
+            2,
+            "Member",
+            "Respected members; has more authority but not drastic changed",
+            false,
+            Component.text("Member").color(NamedTextColor.GOLD)
+    );
 
-	@NotNull private final List<KingdomPerm> permissions; // the permissions for the rank
+    /** The default Officer rank, generated for all newly created Kingdoms */
+    public static final KingdomRank DEFAULT_OFFICER = new KingdomRank(
+            1,
+            "Officer",
+            "High ranking officers; has a lot of authority within",
+            false,
+            Component.text("Officer").color(NamedTextColor.RED)
+    );
 
-	/**
-	 * Creates a new KingdomRank with all parameters, including an infinite list for permissions.
-	 * @param name The name of the rank
-	 * @param symbol The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
-	 * @param description The optional description of the rank (set to null for no description)
-	 * @param permissions An array/varargs of permissions that are assigned to this rank.
-	 */
-	public KingdomRank(@NotNull String name, @Nullable Character symbol, @Nullable String description, KingdomPerm... permissions) {
-		this.name = name;
-		this.description = description;
+    /** The default Leader rank, generated for all newly created Kingdoms */
+    public static final KingdomRank DEFAULT_LEADER = new KingdomRank(
+            0,
+            "Leader",
+            "The highest member within the kingdom",
+            false,
+            Component.text("Leader").color(NamedTextColor.BLUE),
+            KingdomPerm.values()
+    );
 
-		this.symbol = symbol;
+    private int rankId; // the unique identifier for the rank, unique for each kingdom
+    @NotNull private String name; // the name of the rank
+    @Nullable private String description; // the optional description of a rank
 
-		this.permissions = new ArrayList<>(List.of(permissions));
-	}
+    private boolean isDefault; // if this rank is a default rank
 
-	/**
-	 * Creates a new KingdomRank with all parameters with a collection of permissions.
-	 * @param name The name of the rank
-	 * @param symbol The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
-	 * @param description The optional description of the rank (set to null for no description)
-	 * @param permissions A collection of permissions that are assigned to this rank.
-	 */
-	public KingdomRank(@NotNull String name, @Nullable Character symbol, @Nullable String description, @NotNull Collection<KingdomPerm> permissions) {
-		this.name = name;
-		this.description = description;
+    @Nullable private String rawPrefix; // the prefix, in its deserialized form, for the rank
 
-		this.symbol = symbol;
+    @NotNull private final List<KingdomPerm> permissions; // the permissions for the rank
 
-		this.permissions = new ArrayList<>(permissions);
-	}
+    /**
+     * Creates a new KingdomRank with all parameters, including an infinite list for permissions.
+     * @param rankId The unique identifier for the rank (unique for each kingdom)
+     * @param name The name of the rank
+     * @param prefix The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
+     * @param description The optional description of the rank (set to null for no description)
+     * @param permissions An array/varargs of permissions that are assigned to this rank.
+     */
+    @ApiStatus.Internal
+    KingdomRank(final int rankId, @NotNull String name, @Nullable String description, boolean isDefault, @Nullable TextComponent prefix, KingdomPerm... permissions) {
+        this.rankId = rankId;
+        this.name = name;
+        this.description = description;
 
-	/**
-	 * Creates a new KingdomRank with all parameters except has no permissions.
-	 * @param name The name of the rank
-	 * @param symbol The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
-	 * @param description The optional description of the rank (set to null for no description)
-	 */
-	public KingdomRank(@NotNull String name, @Nullable Character symbol, @Nullable String description) {
-		this.name = name;
-		this.description = description;
+        this.isDefault = isDefault;
 
-		this.symbol = symbol;
+        this.rawPrefix = prefix != null ? LegacyComponentSerializer.legacyAmpersand().serialize(prefix) : null;
 
-		this.permissions = new ArrayList<>();
-	}
+        this.permissions = new ArrayList<>(List.of(permissions));
+    }
 
-	/**
-	 * Creates a new KingdomRank with a name and a symbol, but lacks any permissions or a description.
-	 * @param name The name of the rank
-	 * @param symbol The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
-	 */
-	public KingdomRank(@NotNull String name, @Nullable Character symbol) { this(name, symbol, null); }
+    /**
+     * Creates a new KingdomRank with all parameters, including an infinite list for permissions.
+     * @param rankId The unique identifier for the rank (unique for each kingdom)
+     * @param name The name of the rank
+     * @param description The optional description of the rank (set to null for no description)
+     * @param isDefault If this rank is a default rank
+     * @param prefix The optional display symbol of the rank. If none is set, the first letter of the rank name will be displayed instead.
+     * @param permissions A collection of permissions that are assigned to this rank.
+     */
+    KingdomRank(final int rankId, @NotNull String name, @Nullable String description, boolean isDefault, @Nullable TextComponent prefix, @NotNull Collection<KingdomPerm> permissions) {
+        this.rankId = rankId;
+        this.name = name;
+        this.description = description;
 
-	/**
-	 * Creates a blank KingdomRank with only a name and lacks everything else.
-	 * @param name The name of the rank
-	 */
-	public KingdomRank(@NotNull String name) { this(name, null, null); }
+        this.isDefault = isDefault;
 
-	@Override public @NotNull String getName() { return name; }
-	@Override public void setName(@NotNull String name) { this.name = name; }
+        this.rawPrefix = prefix != null ? LegacyComponentSerializer.legacyAmpersand().serialize(prefix) : null;
 
-	@Override public @Nullable String getDescription() { return description; }
-	@Override public void setDescription(@Nullable String description) { this.description = description; }
+        this.permissions = new ArrayList<>(permissions);
+    }
 
-	/**
-	 * Returns the stored display symbol of the rank, if any
-	 * @return The character for the symbol, otherwise null if none set
-	 */
-	@Nullable public Character getSymbol() { return symbol; }
+    /**
+     * Returns the current rank ID of the rank
+     * @return The rank ID of the rank
+     */
+    public int getRankId() { return rankId; }
 
-	/**
-	 * Sets the stored display symbol of the rank. This will be displayed (instead of the first letter, if none set)
-	 * @param symbol The new symbol to display
-	 */
-	public void setSymbol(@Nullable Character symbol) { this.symbol = symbol; }
+    @Override public @NotNull String getName() { return name; }
+    @Override public void setName(@NotNull String name) { this.name = name; }
 
-	/**
-	 * Returns all the permissions that this rank grants to members
-	 * @return A list of permissions this rank grants
-	 */
-	public List<KingdomPerm> getAllPermissions() { return permissions; }
+    @Override public @Nullable String getDescription() { return description; }
+    @Override public void setDescription(@Nullable String description) { this.description = description; }
 
-	/**
-	 * Checks if this rank grants the given permission
-	 * @param perm The permission to check
-	 * @return True if this rank grants this permission, false if it doesn't.
-	 * @see Collection#contains(Object)
-	 */
-	public boolean hasPermission(KingdomPerm perm) { return permissions.contains(perm); }
+    /**
+     * Returns the raw prefix of the rank, if any.
+     * <p>
+     *     This is the deserialize form of the prefix, and is used to store the prefix into the storage system.
+     *     This is not the display form of the prefix. To get the display form, use {@link #getPrefix()}.
+     *     If no prefix is set, this will return null.
+     * </p>
+     * @return The raw prefix, otherwise null if none set
+     */
+    @Nullable public String getRawPrefix() { return rawPrefix; }
 
-	/**
-	 * Adds a single permission that this rank will grant.
-	 * @param perm The new permission to grant.
-	 */
-	public void addPermission(KingdomPerm perm) { permissions.add(perm); }
+    /**
+     * Returns the stored display symbol of the rank, if any
+     * @return The character for the symbol, otherwise null if none set
+     */
+    @Nullable public TextComponent getPrefix() { return (rawPrefix != null ? LegacyComponentSerializer.legacyAmpersand().deserialize(rawPrefix) : null); }
 
-	/**
-	 * Adds several permissions that this rank will grant.
-	 * @param perms An array of permissions to add
-	 */
-	public void addPermissions(KingdomPerm... perms) { permissions.addAll(List.of(perms)); }
+    /**
+     * Sets the stored display symbol of the rank. This will be displayed (instead of the first letter, if none set)
+     * @param prefix The new symbol to display
+     */
+    public void setPrefix(@Nullable TextComponent prefix) { this.rawPrefix = (prefix != null ? LegacyComponentSerializer.legacyAmpersand().serialize(prefix) : null); }
 
-	/**
-	 * Adds several permissions that this rank will grant
-	 * @param perms A collection of permissions to add
-	 */
-	public void addPermissions(Collection<KingdomPerm> perms) { permissions.addAll(perms); }
+    /**
+     * Returns all the permissions that this rank grants to members
+     * @return A list of permissions this rank grants
+     */
+    public List<KingdomPerm> getAllPermissions() { return permissions; }
 
-	/**
-	 * Removes a single permission that this rank would grant.
-	 * @param perm The permission to revoke
-	 */
-	public void revokePermission(KingdomPerm perm) { permissions.remove(perm); }
+    /**
+     * Checks if this rank grants the given permission
+     * @param perm The permission to check
+     * @return True if this rank grants this permission, false if it doesn't.
+     * @see Collection#contains(Object)
+     */
+    public boolean hasPermission(KingdomPerm perm) { return permissions.contains(perm); }
 
-	/**
-	 * Removes multiple permissions that this rank would grant
-	 * @param perms An array of permissions to revoke
-	 */
-	public void revokePermission(KingdomPerm... perms) { permissions.removeAll(List.of(perms)); }
+    /**
+     * Adds a single permission that this rank will grant.
+     * @param perm The new permission to grant.
+     */
+    public void addPermission(KingdomPerm perm) { permissions.add(perm); }
 
-	/**
-	 * Removes multiple permissions that this rank would grant
-	 * @param perms A collection of permissions to revoke
-	 */
-	public void revokePermission(Collection<KingdomPerm> perms) { permissions.removeAll(perms); }
+    /**
+     * Adds several permissions that this rank will grant.
+     * @param perms An array of permissions to add
+     */
+    public void addPermissions(KingdomPerm... perms) { permissions.addAll(List.of(perms)); }
 
-	@Override public final boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof KingdomRank that)) return false;
+    /**
+     * Adds several permissions that this rank will grant
+     * @param perms A collection of permissions to add
+     */
+    public void addPermissions(Collection<KingdomPerm> perms) { permissions.addAll(perms); }
 
-		return name.equals(that.name) && Objects.equals(description, that.description) && Objects.equals(symbol, that.symbol) && permissions.equals(that.permissions);
-	}
+    /**
+     * Removes a single permission that this rank would grant.
+     * @param perm The permission to revoke
+     */
+    public void revokePermission(KingdomPerm perm) { permissions.remove(perm); }
 
-	@Override public int hashCode() {
-		int result = name.hashCode();
-		result = 31 * result + Objects.hashCode(description);
-		result = 31 * result + Objects.hashCode(symbol);
-		result = 31 * result + permissions.hashCode();
-		return result;
-	}
+    /**
+     * Removes multiple permissions that this rank would grant
+     * @param perms An array of permissions to revoke
+     */
+    public void revokePermission(KingdomPerm... perms) { permissions.removeAll(List.of(perms)); }
+
+    /**
+     * Removes multiple permissions that this rank would grant
+     * @param perms A collection of permissions to revoke
+     */
+    public void revokePermission(Collection<KingdomPerm> perms) { permissions.removeAll(perms); }
+
+    @Override public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof KingdomRank that)) return false;
+
+		return rankId == that.rankId &&
+               isDefault == that.isDefault &&
+               name.equals(that.name) &&
+               Objects.equals(description, that.description) &&
+               Objects.equals(rawPrefix, that.rawPrefix) &&
+               permissions.equals(that.permissions);
+    }
+
+    @Override public int hashCode() {
+        int result = rankId;
+        result = 31 * result + name.hashCode();
+        result = 31 * result + Objects.hashCode(description);
+        result = 31 * result + Boolean.hashCode(isDefault);
+        result = 31 * result + Objects.hashCode(rawPrefix);
+        result = 31 * result + permissions.hashCode();
+        return result;
+    }
 }

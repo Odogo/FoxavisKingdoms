@@ -1,16 +1,14 @@
 package net.foxavis.kingdoms.util;
 
+import net.foxavis.kingdoms.FoxavisKingdoms;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 /**
  * <p>An abstract class handling the retrieving and storage of data into/from an internal cache and the filesystem.</p>
@@ -29,13 +27,22 @@ public abstract class CachedDataManager<K, V> {
 	// --- Static --- \\
 
 	/** The raw list of all CDMs */
-	private static final List<CachedDataManager<?, ?>> caches = new ArrayList<>();
+	private static final List<CachedDataManager<?, ?>> caches = new CopyOnWriteArrayList<>();
+
+	private static final Logger logger = FoxavisKingdoms.getLoggerInstance();
 
 	/**
 	 * Returns a list of all created CDMs.
 	 * @return the list of created CDMs.
 	 */
 	public static List<CachedDataManager<?, ?>> getCaches() { return caches; }
+
+	/**
+	 * Shuts down all created CDMs.
+	 */
+	public static void shutdownAll() {
+		caches.forEach(CachedDataManager::shutdown);
+	}
 
 	/**
 	 * Reads a file from the file system and returns its contents
@@ -51,7 +58,8 @@ public abstract class CachedDataManager<K, V> {
 			StringBuilder builder = new StringBuilder();
 
 			String line;
-			while((line = reader.readLine()) != null) builder.append(line);
+			while((line = reader.readLine()) != null)
+				builder.append(line).append(System.lineSeparator());
 
 			if(builder.toString().isEmpty() || builder.toString().isBlank()) return null;
 			return builder.toString();
@@ -71,6 +79,7 @@ public abstract class CachedDataManager<K, V> {
 		if(file.isDirectory()) throw new IllegalArgumentException("file is a directory");
 
 		if(!file.exists()) {
+			file.getParentFile().mkdirs();
 			if(!file.createNewFile())
 				throw new IOException("failed to create the file");
 		}
@@ -82,6 +91,8 @@ public abstract class CachedDataManager<K, V> {
 
 	// --- Object-based --- \\
 	// -- Fields -- \\
+
+	private final String identifier;
 
 	private final Map<K, V> cache;
 	private final Map<K, Long> accessTime;
@@ -103,6 +114,10 @@ public abstract class CachedDataManager<K, V> {
 
 		caches.add(this);
 		startCacheExpiry();
+
+		identifier = this.getClass().getSimpleName();
+
+		logger.info("[" + identifier + "] Created CachedDataManager with expiration time of " + expirationTime + " " + timeUnit.name());
 	}
 
 	/**
@@ -144,17 +159,23 @@ public abstract class CachedDataManager<K, V> {
 	 * @return The value associated with key, or null if the source does not have 
 	 */
 	@Nullable public V fetchData(@NotNull K key) {
-		if(hasData(key)) {
+		V value = cache.get(key);
+		if(value != null) {
 			accessTime.put(key, System.currentTimeMillis());
-			return cache.get(key);
+			logger.fine("[" + identifier + "] Cache hit for key: " + key);
 		} else {
-			V value = loadFromSource(key);
-			if(value == null) return null;
-			
+			logger.fine("[" + identifier + "] Cache miss for key: " + key + ". Loading from source...");
+			value = loadFromSource(key);
+			if(value == null) {
+				logger.warning("[" + identifier + "] No data found for key: " + key);
+				return null;
+			}
+
 			cache.put(key, value);
 			accessTime.put(key, System.currentTimeMillis());
-			return value;
+			logger.fine("[" + identifier + "] Data loaded from source for key: " + key);
 		}
+		return value;
 	}
 
 	/**
@@ -176,15 +197,20 @@ public abstract class CachedDataManager<K, V> {
 		cache.put(key, value);
 		accessTime.put(key, System.currentTimeMillis());
 		saveToSource(key, value);
+		logger.fine("[" + identifier + "] Data stored for key: " + key);
 	}
 
 	/**
 	 * Settles all data inside the cache to the source. All data settled will be removed from the cache as well.
 	 */
 	public void settleData() {
-		cache.forEach(this::saveToSource);
+		cache.forEach((key, value) -> {
+			saveToSource(key, value);
+			logger.fine("[" + identifier + "] Data settled for key: " + key);
+		});
 		cache.clear();
 		accessTime.clear();
+		logger.info("[" + identifier + "] All cache data settled to source, cache cleared.");
 	}
 
 	/**
@@ -193,11 +219,15 @@ public abstract class CachedDataManager<K, V> {
 	 * @return True if the data was in the cache and was saved, false if given key has no data in the cache.
 	 */
 	public boolean settleData(@NotNull K key) {
-		if(!hasData(key)) return false;
+		V value = cache.remove(key);
+		if(value == null) {
+			logger.fine("[" + identifier + "] No data found for key: " + key);
+			return false;
+		}
 
-		saveToSource(key, cache.get(key));
-		cache.remove(key);
 		accessTime.remove(key);
+		saveToSource(key, cache.get(key));
+		logger.fine("[" + identifier + "] Data settled and removed from cache for key: " + key);
 		return true;
 	}
 
@@ -210,8 +240,10 @@ public abstract class CachedDataManager<K, V> {
 	 * @param key the key to destroy the data of
 	 */
 	public void destroyData(@NotNull K key) {
-		settleData();
+		cache.remove(key);
+		accessTime.remove(key);
 		deleteFromSource(key);
+		logger.info("[" + identifier + "] Data destroyed for key: " + key);
 	}
 
 	/**
@@ -229,10 +261,18 @@ public abstract class CachedDataManager<K, V> {
 	 */
 	private void startCacheExpiry() {
 		executorService.scheduleAtFixedRate(() -> {
-			cache.keySet().stream()
-					.filter(this::shouldExpire)
-					.forEach(this::settleData);
+			try {
+				cache.keySet().stream()
+						.filter(this::shouldExpire)
+						.forEach(key -> {
+							settleData(key);
+							logger.fine("[" + identifier + "] Cache entry expired and settled for key: " + key);
+						});
+			} catch (Exception e) {
+				logger.severe("[" + identifier + "] An error occurred while checking for expired data: " + e.getMessage());
+			}
 		}, expirationTime, expirationTime, TimeUnit.MILLISECONDS);
+		logger.info("[" + identifier + "] Cache expiry service started.");
 	}
 
 	/**

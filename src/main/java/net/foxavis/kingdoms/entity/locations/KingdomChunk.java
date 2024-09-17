@@ -24,7 +24,7 @@ public class KingdomChunk {
 	 * @param z The Z cord of the chunk
 	 */
 	public KingdomChunk(@NotNull String world, int x, int z) {
-		this.world = world;
+		this.world = world.intern();
 		this.x = x;
 		this.z = z;
 	}
