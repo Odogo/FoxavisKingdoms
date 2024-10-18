@@ -193,7 +193,7 @@ public abstract class CachedDataManager<K, V> {
 	 * @param key The key to set the given value for
 	 * @param value The data, or value, to set with the given key
 	 */
-	public void storeData(K key, V value) {
+	public void storeData(@NotNull K key, @NotNull V value) {
 		cache.put(key, value);
 		accessTime.put(key, System.currentTimeMillis());
 		saveToSource(key, value);
@@ -251,7 +251,7 @@ public abstract class CachedDataManager<K, V> {
 	 * @param key The key to check if it's expired
 	 * @return True, if the data in the cache has expired, false otherwise.
 	 */
-	protected boolean shouldExpire(K key) {
+	protected boolean shouldExpire(@NotNull K key) {
 		return System.currentTimeMillis() - accessTime.get(key) > expirationTime;
 	}
 

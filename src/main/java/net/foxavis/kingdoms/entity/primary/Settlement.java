@@ -36,7 +36,7 @@ public class Settlement implements KingdomHeld, Describable, Territorial {
 	@NotNull private String name;
 	@Nullable private String description;
 
-	@NotNull private HashSet<KingdomChunk> territory;
+	@NotNull private final HashSet<KingdomChunk> territory;
 	@Nullable private Map<KingdomFlag, Boolean> overrideFlags;
 
 	/**
@@ -44,8 +44,8 @@ public class Settlement implements KingdomHeld, Describable, Territorial {
 	 * @param kingdom The Kingdom that owns this settlement.
 	 * @param name The name of the settlement.
 	 */
-	public Settlement(Kingdom kingdom, String name) {
-		this.owningKingdom = null; // TODO: Implement using the Kingdom's UUID
+	public Settlement(@NotNull Kingdom kingdom, @NotNull String name) {
+		this.owningKingdom = kingdom.getKingdomId(); // TODO: Implement using the Kingdom's UUID
 		this.name = name;
 
 		this.description = null;
@@ -54,8 +54,8 @@ public class Settlement implements KingdomHeld, Describable, Territorial {
 	}
 
 	// -- KingdomHeld methods --
-	@Override public Kingdom getOwningKingdom() { return null; } // TODO: Implement using the cache
-	@Override public void setOwningKingdom(Kingdom kingdom) { this.owningKingdom = null; } // TODO: Implement using the Kingdom's UUID
+	@Override public Kingdom getOwningKingdom() { return Kingdom.getCache().fetchData(owningKingdom); }
+	@Override public void setOwningKingdom(Kingdom kingdom) { this.owningKingdom = kingdom.getKingdomId(); }
 
 	// -- Describable methods --
 	@Override public @NotNull String getName() { return name; }
@@ -121,9 +121,9 @@ public class Settlement implements KingdomHeld, Describable, Territorial {
 	 * @param flag The flag to get the state of.
 	 * @return The flag state for the specified flag.
 	 */
-	public boolean getFlag(KingdomFlag flag) {
-		if(isOverridingFlag(flag)) return overrideFlags.get(flag);
-		return false; // TODO: Replace with the default flag from the kingdom
+	public boolean getFlag(@NotNull KingdomFlag flag) {
+		if(overrideFlags == null) return getOwningKingdom().getFlagState(flag);
+		return overrideFlags.getOrDefault(flag, getOwningKingdom().getFlagState(flag));
 	}
 
 	/**

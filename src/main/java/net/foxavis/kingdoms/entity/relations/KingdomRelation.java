@@ -1,4 +1,4 @@
-package net.foxavis.kingdoms.entity;
+package net.foxavis.kingdoms.entity.relations;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
